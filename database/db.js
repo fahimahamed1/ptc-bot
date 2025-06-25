@@ -1,9 +1,13 @@
-// utils/db.js
 const fs = require('fs');
 const path = require('path');
 const { ADMIN_IDS } = require('../config');
 
-const dbPath = path.join(__dirname, '..', 'ptc-db.json');
+const dbPath = path.join(__dirname, 'data', 'ptc-db.json');
+
+// Ensure the data directory exists
+if (!fs.existsSync(path.dirname(dbPath))) {
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+}
 
 function getDefaultDb() {
   return {
@@ -54,13 +58,25 @@ function getMinPayout() {
 
 function isAdmin(ctxOrId) {
   let userId;
+
   if (typeof ctxOrId === 'string' || typeof ctxOrId === 'number') {
     userId = Number(ctxOrId);
   } else if (ctxOrId && ctxOrId.from) {
     userId = Number(ctxOrId.from.id);
-  } else {
-    return false;
+
+    // Notify the user (only once here)
+    if (!ADMIN_IDS.includes(userId)) {
+      try {
+        ctxOrId.reply?.('❌ You are not an admin.');
+      } catch (err) {
+        console.warn('Could not notify user:', err);
+      }
+      return false;
+    }
+
+    return true;
   }
+
   return ADMIN_IDS.includes(userId);
 }
 

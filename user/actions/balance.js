@@ -1,4 +1,4 @@
-const { ensureUser, getCurrency } = require('../../db/db');
+const { ensureUser, getCurrency } = require('../../database/db');
 
 module.exports = function setupBalance(bot) {
   bot.command('balance', (ctx) => {

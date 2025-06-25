@@ -1,5 +1,5 @@
 const { Markup } = require('telegraf');
-const { isAdmin, readDb, writeDb, getCurrency } = require('../../db/db');
+const { isAdmin, readDb, writeDb, getCurrency } = require('../../database/db');
 
 module.exports = (bot) => {
   bot.action('admin_payout', (ctx) => {

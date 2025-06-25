@@ -1,4 +1,4 @@
-const { isAdmin, readDb, writeDb, getCurrency } = require('../../db/db');
+const { isAdmin, readDb, writeDb, getCurrency } = require('../../database/db');
 
 module.exports = (bot) => {
   bot.action('set_ref_bonus', (ctx) => {

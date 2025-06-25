@@ -1,4 +1,4 @@
-const { isAdmin, readDb, getCurrency } = require('../../db/db');
+const { isAdmin, readDb, getCurrency } = require('../../database/db');
 
 module.exports = (bot) => {
   bot.action('list_ads', (ctx) => {

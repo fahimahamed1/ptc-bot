@@ -1,4 +1,4 @@
-const { isAdmin, readDb, writeDb } = require('../../db/db');
+const { isAdmin, readDb, writeDb } = require('../../database/db');
 
 module.exports = (bot) => {
   bot.action('set_currency', (ctx) => {

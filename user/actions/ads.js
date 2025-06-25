@@ -1,6 +1,5 @@
 const { Markup } = require('telegraf');
-const { readDb, writeDb, ensureUser, getCurrency } = require('../../db/db');
-
+const { readDb, writeDb, ensureUser, getCurrency } = require('../../database/db');
 
 module.exports = function setupAds(bot) {
   bot.command('ads', async (ctx) => {
@@ -9,21 +8,28 @@ module.exports = function setupAds(bot) {
       const userId = String(ctx.from.id);
       const user = db.users[userId] ?? ensureUser(userId);
 
-      if (db.ads.length === 0) return ctx.reply('📭 No ads available right now.');
+      if (db.ads.length === 0) {
+        return ctx.reply('📭 No ads available right now.');
+      }
 
       for (const ad of db.ads) {
         const watched = user.watched?.[ad.id];
+        const button = watched
+          ? Markup.button.callback('✅ Watched', 'noop', true)
+          : Markup.button.callback('▶️ I Watched This', `watched_${ad.id}`);
+
         await ctx.reply(
-          `🔗 ${ad.url}\n💰 Reward: ${ad.reward} ${getCurrency()}\nStatus: ${watched ? '✅ Watched' : '❌ Not watched'}`,
-          Markup.inlineKeyboard([
-            watched
-              ? Markup.button.callback('✅ Watched', 'noop', true)
-              : Markup.button.callback('✅ I Watched', `watched_${ad.id}`),
-          ])
+          `📢 *Advertisement*\n\n🔗 [Visit Ad](${ad.url})\n💰 *Reward:* ${ad.reward} ${getCurrency()}\n📌 *Status:* ${watched ? '✅ Watched' : '❌ Not Watched'}`,
+          {
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true,
+            ...Markup.inlineKeyboard([[button]])
+          }
         );
       }
     } catch (err) {
       console.error('Error in /ads:', err);
+      ctx.reply('❌ Failed to load ads.');
     }
   });
 
@@ -45,7 +51,7 @@ module.exports = function setupAds(bot) {
 
       writeDb(db);
 
-      await ctx.reply(`✅ Congrats! You earned ${ad.reward} ${getCurrency()}.`);
+      await ctx.reply(`✅ Congrats! You earned *${ad.reward} ${getCurrency()}*!`, { parse_mode: 'Markdown' });
       ctx.answerCbQuery();
     } catch (err) {
       console.error('Error in watched action:', err);
@@ -53,6 +59,5 @@ module.exports = function setupAds(bot) {
     }
   });
 
-  // no-op button for already watched
   bot.action('noop', (ctx) => ctx.answerCbQuery());
 };

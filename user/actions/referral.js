@@ -1,4 +1,4 @@
-const { ensureUser, getCurrency } = require('../../db/db');
+const { ensureUser, getCurrency } = require('../../database/db');
 
 module.exports = function setupReferral(bot) {
   bot.command('referral', (ctx) => {

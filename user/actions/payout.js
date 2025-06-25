@@ -1,4 +1,4 @@
-const { readDb, writeDb, ensureUser, getCurrency, getMinPayout } = require('../../db/db');
+const { readDb, writeDb, ensureUser, getCurrency, getMinPayout } = require('../../database/db');
 
 module.exports = function setupPayout(bot) {
   bot.command('payout', async (ctx) => {
