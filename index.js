@@ -1,7 +1,7 @@
 const { Telegraf, session } = require('telegraf');
 const { BOT_TOKEN, PORT } = require('./config');
-const setupBotCommands = require('./bot/commands');
-const setupAdminPanel = require('./bot/admin');
+const setupBotCommands = require('./user/commands');
+const setupAdminPanel = require('./admin/admin');
 const express = require('express');
 
 const bot = new Telegraf(BOT_TOKEN);
