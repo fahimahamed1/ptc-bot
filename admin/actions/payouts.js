@@ -2,63 +2,87 @@ const { Markup } = require('telegraf');
 const { isAdmin, readDb, writeDb, getCurrency } = require('../../database/db');
 
 module.exports = (bot) => {
-  bot.action('admin_payout', (ctx) => {
+  // Show payout requests
+  bot.action('admin_payout', async (ctx) => {
     if (!isAdmin(ctx)) return ctx.answerCbQuery();
 
     const db = readDb();
-    if (!db.payouts || db.payouts.length === 0) {
-      return ctx.reply('📭 No payout requests.');
+    const requests = db.payouts || [];
+
+    if (requests.length === 0) {
+      return ctx.reply('📭 No payout requests at the moment.');
     }
 
-    db.payouts.forEach(req => {
-      ctx.reply(
-        `🧾 Payout Request:\n👤 User: ${req.userId}\n💰 Amount: ${req.amount} ${getCurrency()}`,
-        Markup.inlineKeyboard([
-          Markup.button.callback('✅ Mark Paid', `paid_${req.id}`),
-          Markup.button.callback('❌ Ignore & Refund', `ignore_${req.id}`)
-        ])
+    for (const req of requests) {
+      await ctx.reply(
+        `🧾 *Payout Request*\n\n👤 User ID: \`${req.userId}\`\n💳 Method: ${req.method}\n🔢 Account: ${req.account}\n💰 Amount: *${req.amount} ${getCurrency()}*`,
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            Markup.button.callback('✅ Mark Paid', `paid_${req.id}`),
+            Markup.button.callback('❌ Ignore & Refund', `ignore_${req.id}`)
+          ])
+        }
       );
-    });
+    }
 
     ctx.answerCbQuery();
   });
 
+  // Mark as paid
   bot.action(/^paid_(.+)$/, async (ctx) => {
     if (!isAdmin(ctx)) return ctx.answerCbQuery();
 
     const id = ctx.match[1];
     const db = readDb();
-    const req = db.payouts.find(p => p.id === id);
-    if (!req) return ctx.answerCbQuery('Request not found.');
+    const index = db.payouts.findIndex(p => p.id === id);
+    if (index === -1) return ctx.answerCbQuery('❌ Request not found.');
 
-    db.payouts = db.payouts.filter(p => p.id !== id);
+    const req = db.payouts.splice(index, 1)[0];
     db.confirmedPayouts = db.confirmedPayouts || [];
     db.confirmedPayouts.push(req);
     writeDb(db);
 
-    await ctx.telegram.sendMessage(req.userId, `✅ Your payout of ${req.amount} ${getCurrency()} was confirmed by admin.`);
+    try {
+      await ctx.telegram.sendMessage(
+        req.userId,
+        `✅ Your payout of *${req.amount} ${getCurrency()}* has been *confirmed* by admin.`,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (e) {
+      console.warn('⚠️ Failed to notify user:', e.message);
+    }
+
     await ctx.editMessageText('✅ Marked as paid.');
     ctx.answerCbQuery();
   });
 
+  // Ignore and refund
   bot.action(/^ignore_(.+)$/, async (ctx) => {
     if (!isAdmin(ctx)) return ctx.answerCbQuery();
 
     const id = ctx.match[1];
     const db = readDb();
-    const req = db.payouts.find(p => p.id === id);
-    if (!req) return ctx.answerCbQuery('Not found');
+    const index = db.payouts.findIndex(p => p.id === id);
+    if (index === -1) return ctx.answerCbQuery('❌ Request not found.');
+
+    const req = db.payouts.splice(index, 1)[0];
 
     if (db.users[req.userId]) {
       db.users[req.userId].balance += req.amount;
     }
 
-    db.payouts = db.payouts.filter(p => p.id !== id);
     writeDb(db);
 
     try {
-      await ctx.telegram.sendMessage(req.userId, `⚠️ Your payout request was ignored and refunded ${req.amount} ${getCurrency()}.`);
-    } catch {}
+      await ctx.telegram.sendMessage(
+        req.userId,
+        `⚠️ Your payout request was *ignored* and refunded *${req.amount} ${getCurrency()}*.`,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (e) {
+      console.warn('⚠️ Could not notify user:', e.message);
+    }
 
     await ctx.editMessageText('❌ Ignored and refunded.');
     ctx.answerCbQuery();

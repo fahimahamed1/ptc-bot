@@ -10,6 +10,7 @@ const listAds = require('./actions/listAds');
 const deleteAds = require('./actions/deleteAds');
 const payouts = require('./actions/payouts');
 const stats = require('./actions/stats');
+const managePaymentMethods = require('./actions/managePaymentMethods');
 
 module.exports = function setupAdminPanel(bot) {
   // Admin panel entry
@@ -32,6 +33,9 @@ module.exports = function setupAdminPanel(bot) {
         [
           Markup.button.callback('🎯 Set Min Payout', 'set_min_payout'),
           Markup.button.callback('📊 Stats', 'state_panel')
+        ],
+        [
+          Markup.button.callback('💼 Manage Payments', 'manage_payment_methods')
         ]
       ])
     );
@@ -46,4 +50,5 @@ module.exports = function setupAdminPanel(bot) {
   deleteAds(bot);
   payouts(bot);
   stats(bot);
+  managePaymentMethods(bot);
 };

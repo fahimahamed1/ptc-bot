@@ -1,3 +1,4 @@
+// index.js
 const { Telegraf, session } = require('telegraf');
 const { BOT_TOKEN, PORT } = require('./config');
 const setupBotCommands = require('./user/commands');
@@ -5,26 +6,29 @@ const setupAdminPanel = require('./admin/admin');
 const inputGuard = require('./user/utils/inputGuard');
 const express = require('express');
 
+// Init bot
 const bot = new Telegraf(BOT_TOKEN);
-bot.use(session());
 
-// Init session
+// Session middleware
+bot.use(session());
 bot.use(async (ctx, next) => {
   ctx.session ??= {};
   await next();
 });
 
-// Register features
-setupBotCommands(bot);
-setupAdminPanel(bot);
+// nput filter before command handling
 inputGuard(bot);
 
-// Web server
+// Register user and admin features
+setupBotCommands(bot);
+setupAdminPanel(bot);
+
+// Web status
 const app = express();
 app.get('/', (_, res) => res.send('✅ PTC Bot is running'));
 app.listen(PORT, () => console.log(`🌐 Server running on port ${PORT}`));
 
-// Launch bot
+// Launch
 bot.launch()
   .then(() => console.log('🤖 Bot launched and ready'))
   .catch((err) => {
